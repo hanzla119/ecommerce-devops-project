@@ -31,8 +31,9 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-catalog:v1 ./product-catalog
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-catalog:v1
 
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-cart:v1 ./cart
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-cart:v1
+                 docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-cart:v1 ./Cart
+                 docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-cart:v1
+
 
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-order:v1 ./order
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-order:v1
