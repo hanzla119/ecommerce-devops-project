@@ -1,0 +1,17 @@
+# Stage 1: Build (Compile) the Java code
+FROM eclipse-temurin:17-jdk AS builder
+WORKDIR /app
+COPY OrderService.java .
+# Compile the Java file into a .class file
+RUN javac OrderService.java
+
+# Stage 2: Run the compiled code
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+# Copy the compiled .class file from the builder stage
+COPY --from=builder /app/OrderService*.class ./
+
+EXPOSE 8081
+
+# Command to run the Java program
+CMD ["java", "OrderService"]

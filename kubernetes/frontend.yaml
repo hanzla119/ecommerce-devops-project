@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 2 # We want 2 copies running so if one crashes, the app stays online!
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        # CRITICAL: Replace "hanzla119" if you used a different Docker Hub username
+        image: hanzla119/ecommerce-frontend:v1 
+        ports:
+        - containerPort: 3000 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: LoadBalancer # This tells AWS to create a public web URL for us!
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

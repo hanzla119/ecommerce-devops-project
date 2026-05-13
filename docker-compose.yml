@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - product-catalog
+      - cart
+      - order
+
+  product-catalog:
+    build: ./product-catalog
+    ports:
+      - "5000:5000"
+
+  cart:
+    build: ./cart
+    ports:
+      - "8080:8080"
+
+  order:
+    build: ./order
+    ports:
+      - "8081:8081"
+    depends_on:
+      - payment
+      - notification
+
+  payment:
+    build: ./payment
+    ports:
+      - "4567:4567"
+
+  notification:
+    build: ./notification
+    ports:
+      - "4000:4000"
