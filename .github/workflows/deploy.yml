@@ -1,0 +1,70 @@
+name: CI/CD Pipeline
+
+# Tell the robot to wake up whenever code is pushed to the 'main' branch
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # This is the blank server GitHub gives us
+
+    steps:
+      # 1. Download our code into the server
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Unlock the safe and log into Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3. Build and upload ALL the new code to Docker Hub!
+      - name: Build and Push Docker Images
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-frontend:v1 ./frontend
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-frontend:v1
+
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-catalog:v1 ./product-catalog
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-catalog:v1
+
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-cart:v1 ./cart
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-cart:v1
+
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-order:v1 ./order
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-order:v1
+
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-payment:v1 ./payment
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-payment:v1
+
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-notification:v1 ./notification
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/ecommerce-notification:v1
+
+      # 4. Unlock the safe and log into AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # 5. Connect the robot to our Kubernetes cluster
+      - name: Connect to Amazon EKS
+        run: aws eks update-kubeconfig --name ecommerce-cluster-v4 --region us-east-1
+
+      # 6. Tell Kubernetes to use the newest code we just uploaded
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f kubernetes/
+
+          # Because we keep the tag as ":v1", we force Kubernetes to restart the apps 
+          # so it is forced to download the fresh images from Docker Hub!
+          kubectl rollout restart deployment frontend-deployment
+          kubectl rollout restart deployment catalog-deployment
+          kubectl rollout restart deployment cart-deployment
+          kubectl rollout restart deployment order-deployment
+          kubectl rollout restart deployment payment-deployment
+          kubectl rollout restart deployment notification-deployment
